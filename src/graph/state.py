@@ -1,24 +1,28 @@
 # src/graph/state.py
 
-from typing import TypedDict
+from typing import TypedDict, List
 
 
 class ResearchState(TypedDict):
     """
-    This is our 'shared notebook' that flows through all agents.
-
-    Think of it like a form that gets filled out step by step:
-    - User writes the question
-    - Planner adds research plan
-    - Researcher adds findings
-    - etc.
+    Enhanced state with quality control.
     """
 
-    # Input from user
+    # Input
     question: str
 
-    # Output (what we'll return to user)
+    # Planning phase
+    research_plan: str
+    sub_questions: List[str]
+
+    # Research phase
+    search_results: str
+
+    # Analysis phase
     answer: str
 
-
-# That's it for now! We'll add more fields later.
+    # NEW: Quality control
+    quality_score: float  # 0.0 to 1.0
+    needs_improvement: bool  # True if we should refine
+    critic_reasoning: str  # Critic's feedback on what needs improvement
+    iteration_count: int  # How many times we've tried
