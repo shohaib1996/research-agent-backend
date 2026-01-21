@@ -1,13 +1,15 @@
-# main.py (UPDATE these parts)
+# main.py
+# ruff: noqa: E402
+from dotenv import load_dotenv
+load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv
 import os
 import logging
-from src.graph.multi_agent_graph import create_research_graph
+from src.graph.multi_agent_graph import create_research_graph, run_research_with_db
+from src.database.db_helper import DatabaseHelper
 
-load_dotenv()
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
@@ -17,13 +19,20 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Agentic Research Assistant",
-    description="Multi-agent AI research with quality control",
-    version="0.5.0",
+    description="Multi-agent AI research with persistence",
+    version="0.6.0",
 )
+
+# Database helper
+db_helper = DatabaseHelper()
+
+# Graph
+research_graph = create_research_graph()
 
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=5, max_length=500)
+    use_cache: bool = Field(True, description="Use cached search results")
 
 
 class QueryResponse(BaseModel):
@@ -31,60 +40,75 @@ class QueryResponse(BaseModel):
     answer: str
     quality_score: float
     iterations: int
+    session_id: str
     research_plan: str = ""
-
-
-# Create graph
-research_graph = create_research_graph()
 
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
-        "message": "Multi-Agent Research Assistant with Quality Control",
-        "version": "0.5.0",
-        "agents": ["Planner", "Researcher", "Analyst", "Critic", "Refiner"],
+        "message": "Research Assistant with Persistence",
+        "version": "0.6.0",
+        "features": ["Multi-agent", "Quality control", "Caching", "Sessions"],
     }
 
 
 @app.post("/api/research", response_model=QueryResponse)
 def research_query(request: QueryRequest):
     """
-    Multi-agent research with self-improvement.
+    Research with database persistence.
     """
     try:
         logger.info(f"Research request: {request.question}")
 
-        initial_state = {
-            "question": request.question,
-            "research_plan": "",
-            "sub_questions": [],
-            "search_results": "",
-            "answer": "",
-            "quality_score": 0.0,
-            "needs_improvement": False,
-            "critic_reasoning": "",
-            "iteration_count": 0,
-        }
-
-        result = research_graph.invoke(initial_state)
+        # Run research with database
+        result = run_research_with_db(request.question)
 
         response = QueryResponse(
             success=True,
             answer=result["answer"],
             quality_score=result["quality_score"],
             iterations=result["iteration_count"],
+            session_id=result.get("session_id", ""),
             research_plan=result["research_plan"],
         )
 
-        logger.info(
-            f"Research completed - Quality: {result['quality_score']:.2f}, Iterations: {result['iteration_count']}"
-        )
+        logger.info(f"Session saved: {result.get('session_id')}")
         return response
 
     except Exception as e:
         logger.error(f"Research failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/sessions/recent")
+def get_recent_sessions(limit: int = 10):
+    """
+    Get recent research sessions.
+    """
+    try:
+        sessions = db_helper.get_recent_sessions(limit=limit)
+        return {"success": True, "count": len(sessions), "sessions": sessions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/sessions/{session_id}")
+def get_session(session_id: str):
+    """
+    Get specific session by ID.
+    """
+    try:
+        session = db_helper.get_session(session_id)
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        return {"success": True, "session": session}
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 

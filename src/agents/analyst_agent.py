@@ -12,7 +12,7 @@ class AnalystAgent:
 
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.5, api_key=os.getenv("OPENAI_API_KEY")
+            model="gpt-3.5-turbo", temperature=0.5, api_key=os.getenv("OPENAI_API_KEY")
         )
 
         self.prompt = ChatPromptTemplate.from_messages(

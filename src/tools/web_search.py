@@ -6,26 +6,37 @@ import os
 
 class WebSearchTool:
     """
-    Tool for searching the web using Tavily.
+    Web search with caching support.
     """
 
-    def __init__(self):
+    def __init__(self, db_helper=None):
         api_key = os.getenv("TAVILY_API_KEY")
         self.client = TavilyClient(api_key=api_key)
+        self.db_helper = db_helper  # Optional database helper
 
-    def search(self, query: str, max_results: int = 3) -> str:
+    def search(self, query: str, max_results: int = 3, use_cache: bool = True) -> str:
         """
-        Search the web and return results as text.
+        Search with caching.
 
         Args:
             query: Search query
-            max_results: Number of results to return
+            max_results: Number of results
+            use_cache: Whether to use cached results
 
         Returns:
-            Formatted search results as string
+            Formatted search results
         """
+
+        # Check cache first
+        if use_cache and self.db_helper:
+            cached = self.db_helper.get_cached_search(query)
+            if cached:
+                print(f"   💾 Using cached results for: {query[:50]}...")
+                return cached
+
         try:
-            # Search using Tavily
+            # Perform search
+            print(f"   🌐 Searching web for: {query[:50]}...")
             response = self.client.search(query=query, max_results=max_results)
 
             # Format results
@@ -37,7 +48,13 @@ class WebSearchTool:
 
                 results.append(f"{i}. {title}\n{content}\nSource: {url}\n")
 
-            return "\n".join(results) if results else "No results found"
+            formatted_results = "\n".join(results) if results else "No results found"
+
+            # Cache the results
+            if self.db_helper:
+                self.db_helper.cache_search_result(query, formatted_results)
+
+            return formatted_results
 
         except Exception as e:
             return f"Search failed: {str(e)}"

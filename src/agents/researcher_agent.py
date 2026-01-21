@@ -1,63 +1,39 @@
 # src/agents/researcher_agent.py
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.tools.web_search import WebSearchTool
 
 
 class ResearcherAgent:
     """
-    Agent that searches the web for information.
+    Researcher with caching support and parallel searches.
     """
 
-    def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.3, api_key=os.getenv("OPENAI_API_KEY")
-        )
+    def __init__(self, db_helper=None):
+        # Pass db_helper to search tool for caching
+        self.search_tool = WebSearchTool(db_helper=db_helper)
 
-        self.search_tool = WebSearchTool()
-
-        self.prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "You are a research analyst. Summarize the search results to answer the question.",
-                ),
-                (
-                    "user",
-                    """Question: {question}
-
-Search Results:
-{search_results}
-
-Provide a clear, concise summary based on these results.""",
-                ),
-            ]
-        )
-
-    def research(self, questions: list) -> str:
+    def research(self, questions: list, use_cache: bool = True) -> str:
         """
-        Research multiple questions.
-
-        Args:
-            questions: List of questions to research
-
-        Returns:
-            Combined research findings
+        Research with parallel searches (no per-question LLM calls).
         """
         all_findings = []
 
-        for question in questions:
-            # Search the web
-            search_results = self.search_tool.search(question, max_results=3)
+        # Run searches in parallel
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_question = {
+                executor.submit(
+                    self.search_tool.search, question, 3, use_cache
+                ): question
+                for question in questions
+            }
 
-            # Summarize with LLM
-            chain = self.prompt | self.llm
-            response = chain.invoke(
-                {"question": question, "search_results": search_results}
-            )
-
-            all_findings.append(f"Q: {question}\nA: {response.content}\n")
+            for future in as_completed(future_to_question):
+                question = future_to_question[future]
+                try:
+                    search_results = future.result()
+                    all_findings.append(f"## {question}\n{search_results}\n")
+                except Exception as e:
+                    all_findings.append(f"## {question}\nSearch failed: {e}\n")
 
         return "\n".join(all_findings)

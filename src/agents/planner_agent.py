@@ -12,8 +12,8 @@ class PlannerAgent:
 
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.2,  # Lower = more focused
+            model="gpt-3.5-turbo",
+            temperature=0.2,
             api_key=os.getenv("OPENAI_API_KEY"),
         )
 
@@ -21,14 +21,13 @@ class PlannerAgent:
             [
                 (
                     "system",
-                    """You are a research planner. Break down complex questions into 2-3 simpler sub-questions.
+                    """You are a research planner. Break down complex questions into exactly 2 focused sub-questions.
 
 Format your response as:
-PLAN: [overall strategy]
+PLAN: [overall strategy in one sentence]
 SUB-QUESTIONS:
 1. [first sub-question]
-2. [second sub-question]
-3. [third sub-question if needed]""",
+2. [second sub-question]""",
                 ),
                 ("user", "Question: {question}"),
             ]
