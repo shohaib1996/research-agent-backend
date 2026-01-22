@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import os
 import logging
@@ -21,6 +22,15 @@ app = FastAPI(
     title="Agentic Research Assistant",
     description="Multi-agent AI research with persistence",
     version="0.6.0",
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins (use specific origins in production)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Database helper

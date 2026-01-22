@@ -1,0 +1,881 @@
+# 🎨 Frontend Implementation Plan - Next.js + shadcn/ui + Axios
+
+**Complete step-by-step plan for building the frontend (NO CODE - just strategy)**
+
+---
+
+## 📋 Table of Contents
+
+1. [Project Overview](#overview)
+2. [Technology Stack Breakdown](#tech-stack)
+3. [Project Setup Plan](#setup-plan)
+4. [File Structure Strategy](#file-structure)
+5. [Feature Implementation Roadmap](#feature-roadmap)
+6. [Component Architecture](#component-architecture)
+7. [State Management Strategy](#state-management)
+8. [API Integration Plan](#api-integration)
+9. [Dark/Light Mode Strategy](#theme-strategy)
+10. [UI/UX Design Plan](#design-plan)
+11. [Performance Optimization](#optimization)
+12. [Testing Strategy](#testing)
+13. [Deployment Plan](#deployment)
+
+---
+
+## 🎯 Project Overview
+
+### What You're Building
+
+A modern, responsive web interface for your Agentic Research Assistant with:
+- Real-time research capabilities
+- Session history management
+- Dark/light theme switching
+- Responsive design (mobile + desktop)
+- Professional UI with shadcn/ui components
+
+### User Flow
+
+```
+User lands on homepage
+    ↓
+Sees input form + theme toggle
+    ↓
+Types research question
+    ↓
+Clicks "Research" button
+    ↓
+Sees loading state (skeleton/spinner)
+    ↓
+Receives comprehensive answer with:
+    - Quality score badge
+    - Iteration count
+    - Research plan summary
+    - Full answer (formatted)
+    ↓
+Can view history page
+    ↓
+Can click past sessions to view details
+```
+
+---
+
+## 🛠️ Technology Stack Breakdown
+
+### Core Technologies
+
+**1. Next.js 14 (App Router)**
+- **Why:** Server-side rendering, routing, API routes, optimization
+- **What you'll use:** 
+  - App Router for pages
+  - Server components where possible
+  - Client components for interactivity
+
+**2. TypeScript**
+- **Why:** Type safety, better DX, fewer bugs
+- **What you'll use:**
+  - Interface definitions for API responses
+  - Type-safe props
+  - Autocomplete in IDE
+
+**3. Tailwind CSS**
+- **Why:** Utility-first, fast styling, built into Next.js
+- **What you'll use:**
+  - Responsive design classes
+  - Dark mode classes
+  - Custom color variables
+
+**4. shadcn/ui**
+- **Why:** Beautiful, accessible components, customizable
+- **What you'll use:**
+  - Button, Card, Input, Textarea
+  - Badge, Skeleton, Toast
+  - Dropdown, Separator, Tabs
+
+**5. Axios**
+- **Why:** Better API handling than fetch, interceptors, timeout
+- **What you'll use:**
+  - API client instance
+  - Request/response interceptors
+  - Error handling
+
+**6. next-themes**
+- **Why:** Best dark mode solution for Next.js
+- **What you'll use:**
+  - Theme provider
+  - Theme toggle hook
+  - System preference detection
+
+**7. Zustand (State Management)**
+- **Why:** Simple, lightweight, better than Context API
+- **What you'll use:**
+  - Research state
+  - Session history state
+  - UI state (loading, errors)
+
+**8. Additional Libraries**
+- **lucide-react:** Icons
+- **react-markdown:** Render markdown answers
+- **date-fns:** Format dates nicely
+- **sonner or react-hot-toast:** Better toast notifications
+
+---
+
+## 📦 Project Setup Plan
+
+### Phase 1: Initialize Project (15 minutes)
+
+**Step 1.1:** Create Next.js app with TypeScript + Tailwind
+- Use create-next-app CLI
+- Select App Router
+- Select TypeScript
+- Select Tailwind CSS
+- Select src/ directory
+
+**Step 1.2:** Initialize shadcn/ui
+- Run shadcn init
+- Choose default theme
+- Choose slate as base color
+- Enable CSS variables
+
+**Step 1.3:** Install dependencies
+- axios
+- next-themes
+- zustand
+- lucide-react (icons)
+- react-markdown
+- date-fns
+
+**Step 1.4:** Install shadcn components
+- button, card, input, textarea
+- badge, skeleton, toast
+- dropdown-menu, separator, tabs
+- scroll-area
+
+### Phase 2: Project Structure (10 minutes)
+
+**Step 2.1:** Create folder structure
+```
+src/
+├── app/              (pages)
+├── components/       (reusable UI)
+├── lib/             (utilities, API)
+├── store/           (Zustand state)
+├── types/           (TypeScript types)
+└── hooks/           (custom hooks)
+```
+
+**Step 2.2:** Create environment file
+- .env.local for API URL
+- Add to .gitignore
+
+---
+
+## 📁 File Structure Strategy
+
+### Directory Breakdown
+
+**1. /src/app/** - Pages & Routing
+- `layout.tsx` - Root layout with theme provider
+- `page.tsx` - Home page (research interface)
+- `history/page.tsx` - Research history page
+- `session/[id]/page.tsx` - Individual session detail (optional)
+- `globals.css` - Global styles + Tailwind
+
+**2. /src/components/** - UI Components
+```
+/ui/              (shadcn auto-generated)
+  - button.tsx
+  - card.tsx
+  - input.tsx
+  - etc.
+
+/theme-provider.tsx    (dark/light mode provider)
+/theme-toggle.tsx      (theme switcher button)
+/navbar.tsx            (top navigation)
+/research-form.tsx     (main input form)
+/research-result.tsx   (display answer)
+/loading-skeleton.tsx  (loading state)
+/session-card.tsx      (history item)
+/progress-tracker.tsx  (show research progress - optional)
+```
+
+**3. /src/lib/** - Utilities
+- `api.ts` - Axios instance with interceptors
+- `api-functions.ts` - API endpoint functions
+- `utils.ts` - Helper functions (cn, formatters)
+
+**4. /src/types/** - TypeScript Definitions
+- `index.ts` - All type definitions
+  - ResearchRequest
+  - ResearchResponse
+  - Session
+  - ApiError
+
+**5. /src/store/** - State Management
+- `research-store.ts` - Research state (Zustand)
+- `session-store.ts` - Session history state (Zustand)
+
+**6. /src/hooks/** - Custom Hooks
+- `use-research.ts` - Research logic hook
+- `use-sessions.ts` - Session fetching hook
+
+---
+
+## 🗺️ Feature Implementation Roadmap
+
+### Week 1: Core Functionality
+
+**Day 1-2: Basic Setup**
+- ✅ Initialize Next.js project
+- ✅ Setup shadcn/ui
+- ✅ Create file structure
+- ✅ Setup dark/light mode
+- ✅ Create basic layout + navbar
+
+**Day 3-4: Research Feature**
+- ✅ Create research form component
+- ✅ Setup Axios API client
+- ✅ Implement research API call
+- ✅ Create result display component
+- ✅ Add loading states
+
+**Day 5-7: History Feature**
+- ✅ Create history page
+- ✅ Fetch recent sessions
+- ✅ Display session cards
+- ✅ Add session detail view (optional)
+
+### Week 2: Polish & Enhancement
+
+**Day 8-10: UI/UX Polish**
+- ✅ Add animations
+- ✅ Improve loading states
+- ✅ Add toast notifications
+- ✅ Responsive design (mobile)
+- ✅ Error handling UI
+
+**Day 11-12: Advanced Features**
+- ✅ Add streaming progress (optional)
+- ✅ Export results (PDF/Markdown - optional)
+- ✅ Add filters to history
+- ✅ Search history
+
+**Day 13-14: Testing & Deployment**
+- ✅ Test all features
+- ✅ Fix bugs
+- ✅ Deploy to Vercel
+- ✅ Connect to deployed backend
+
+---
+
+## 🧩 Component Architecture
+
+### Component Hierarchy
+
+```
+App Layout
+├── ThemeProvider (wraps everything)
+├── Navbar
+│   ├── Logo/Title
+│   ├── Navigation Links
+│   └── ThemeToggle
+│
+├── Home Page
+│   ├── Header Section
+│   ├── ResearchForm
+│   │   ├── Textarea (question input)
+│   │   └── Submit Button
+│   ├── LoadingSkeleton (conditional)
+│   └── ResearchResult (conditional)
+│       ├── Quality Badge
+│       ├── Iteration Badge
+│       ├── Research Plan
+│       └── Answer (Markdown)
+│
+└── History Page
+    ├── Header Section
+    ├── Filter/Search Bar (optional)
+    └── Session List
+        └── SessionCard (multiple)
+            ├── Question Title
+            ├── Quality Score
+            ├── Date
+            └── Answer Preview
+```
+
+### Component Design Principles
+
+**1. Composition over Inheritance**
+- Small, reusable components
+- Each component does ONE thing well
+
+**2. Container/Presentational Pattern**
+- Smart components (data fetching)
+- Dumb components (just display)
+
+**3. Component Responsibilities**
+
+**ResearchForm (Smart)**
+- Handles form state
+- Validation
+- Calls API function
+- Shows loading state
+- Handles errors
+
+**ResearchResult (Presentational)**
+- Receives result as prop
+- Displays data
+- No logic, just rendering
+
+**SessionCard (Presentational)**
+- Receives session as prop
+- Displays preview
+- Click handler from parent
+
+---
+
+## 🔄 State Management Strategy
+
+### Zustand Store Structure
+
+**1. Research Store**
+```
+State:
+- currentQuestion: string
+- isLoading: boolean
+- result: ResearchResponse | null
+- error: string | null
+
+Actions:
+- setQuestion(q: string)
+- startResearch(question: string)
+- setResult(result: ResearchResponse)
+- setError(error: string)
+- reset()
+```
+
+**2. Session Store**
+```
+State:
+- sessions: Session[]
+- isLoading: boolean
+- selectedSession: Session | null
+
+Actions:
+- fetchSessions()
+- selectSession(id: string)
+- clearSelection()
+```
+
+### When to Use Zustand vs Local State
+
+**Use Zustand for:**
+- Data shared across pages
+- Research results (might show on multiple pages)
+- Session history
+
+**Use Local State (useState) for:**
+- Form inputs
+- UI toggles (dropdowns, modals)
+- Component-specific data
+
+---
+
+## 🔌 API Integration Plan
+
+### Axios Setup Strategy
+
+**1. Create Base Instance**
+- Base URL from environment variable
+- Default headers (Content-Type: application/json)
+- Timeout: 120 seconds (research takes time!)
+
+**2. Request Interceptor**
+- Add auth tokens (if needed later)
+- Log requests (in development)
+
+**3. Response Interceptor**
+- Handle common errors
+- Parse error messages
+- Retry on network failure (optional)
+
+**4. API Functions**
+
+Create separate function for each endpoint:
+
+**performResearch(question, useCache)**
+- POST /api/research
+- Returns: ResearchResponse
+- Handles: Loading, errors, timeout
+
+**getRecentSessions(limit)**
+- GET /api/sessions/recent
+- Returns: SessionsResponse
+- Handles: Empty state
+
+**getSession(sessionId)**
+- GET /api/sessions/{id}
+- Returns: SessionDetailResponse
+- Handles: 404 not found
+
+**checkHealth()**
+- GET /
+- Returns: health status
+- Use for: Connection testing
+
+### Error Handling Strategy
+
+**Network Errors:**
+- Show toast: "Connection failed. Check if backend is running."
+- Offer retry button
+
+**Timeout Errors:**
+- Show toast: "Research taking too long. Please try again."
+- Don't fail silently
+
+**Validation Errors:**
+- Show inline form errors
+- Highlight input field
+
+**Server Errors (500):**
+- Show toast: "Server error. Please try again later."
+- Log to console for debugging
+
+---
+
+## 🌓 Dark/Light Mode Strategy
+
+### Implementation Plan
+
+**1. Setup next-themes**
+- Wrap app in ThemeProvider
+- Enable system preference detection
+- Prevent flash of wrong theme
+
+**2. Create Theme Toggle**
+- Dropdown with 3 options:
+  - Light
+  - Dark
+  - System (auto)
+- Smooth icon transition
+- Position: Top right of navbar
+
+**3. Customize Colors**
+
+Define CSS variables for both themes:
+
+**Light Theme:**
+- Background: white
+- Text: dark gray
+- Cards: light gray
+- Borders: subtle gray
+- Primary: blue/purple
+- Accent: lighter shade
+
+**Dark Theme:**
+- Background: very dark gray
+- Text: light gray/white
+- Cards: dark gray
+- Borders: slightly lighter gray
+- Primary: brighter blue/purple
+- Accent: lighter shade
+
+**4. Component Theming**
+
+Each component should use theme-aware classes:
+- `bg-background` not `bg-white`
+- `text-foreground` not `text-black`
+- `border-border` not `border-gray-300`
+
+**5. Test Both Themes**
+- Check all pages in both themes
+- Verify contrast ratios (accessibility)
+- Test smooth transitions
+
+---
+
+## 🎨 UI/UX Design Plan
+
+### Design Principles
+
+**1. Clean & Minimal**
+- Lots of whitespace
+- Focus on content
+- No clutter
+
+**2. Professional**
+- Consistent spacing
+- Proper typography hierarchy
+- Subtle shadows/borders
+
+**3. Responsive**
+- Mobile-first approach
+- Breakpoints: sm, md, lg, xl
+- Touch-friendly on mobile
+
+**4. Accessible**
+- Proper contrast ratios
+- Keyboard navigation
+- Screen reader friendly
+- ARIA labels
+
+### Page Layouts
+
+**Home Page Layout:**
+```
+[Navbar - full width]
+
+[Hero Section - centered]
+- Title: "AI-Powered Research Assistant"
+- Subtitle: Description
+- (max-width: 800px)
+
+[Research Form - centered card]
+- Large textarea
+- Submit button
+- (max-width: 800px)
+
+[Results Section - centered]
+- Badges (quality, iterations)
+- Research plan summary
+- Full answer (formatted)
+- (max-width: 800px)
+
+[Footer - optional]
+```
+
+**History Page Layout:**
+```
+[Navbar - full width]
+
+[Header Section]
+- Title: "Research History"
+- Search/Filter bar
+
+[Session Grid]
+- 1 column on mobile
+- 2 columns on tablet
+- 3 columns on desktop
+- Card hover effects
+```
+
+### Visual Design Elements
+
+**Colors:**
+- Primary: Purple/Blue gradient
+- Success: Green (quality > 80%)
+- Warning: Yellow (quality 60-80%)
+- Danger: Red (quality < 60%)
+- Neutral: Grays
+
+**Typography:**
+- Headings: Bold, larger
+- Body: Regular, readable (16px base)
+- Code: Monospace font
+- Markdown: Proper hierarchy
+
+**Spacing:**
+- Consistent padding (4, 8, 16, 24, 32px)
+- Generous margins between sections
+- Breathing room in cards
+
+**Animations:**
+- Smooth transitions (200ms)
+- Loading spinner
+- Skeleton pulse
+- Hover effects (scale, shadow)
+- Theme toggle icon rotation
+
+---
+
+## ⚡ Performance Optimization
+
+### Optimization Strategy
+
+**1. Code Splitting**
+- Dynamic imports for heavy components
+- Load markdown renderer only when needed
+- Lazy load history page
+
+**2. Image Optimization**
+- Use Next.js Image component
+- Proper sizes and formats
+- Lazy loading
+
+**3. API Optimization**
+- Cache API responses (axios-cache-adapter)
+- Debounce search inputs
+- Pagination for history (don't load 1000 sessions)
+
+**4. Bundle Optimization**
+- Tree-shaking unused code
+- Minimize bundle size
+- Analyze with next/bundle-analyzer
+
+**5. Rendering Optimization**
+- Use React.memo for expensive components
+- useCallback for functions passed as props
+- useMemo for expensive calculations
+
+**6. Loading States**
+- Show skeleton immediately
+- Progressive loading (show parts as they load)
+- Optimistic UI updates
+
+---
+
+## 🧪 Testing Strategy
+
+### Testing Plan
+
+**1. Manual Testing Checklist**
+- ✅ Research form submits correctly
+- ✅ Results display properly
+- ✅ History loads all sessions
+- ✅ Dark/light mode switches smoothly
+- ✅ Mobile responsive
+- ✅ All links work
+- ✅ Error states show correctly
+
+**2. Browser Testing**
+- Chrome (primary)
+- Firefox
+- Safari
+- Edge
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+**3. Accessibility Testing**
+- Keyboard navigation works
+- Screen reader compatible
+- Color contrast passes WCAG AA
+- Focus indicators visible
+
+**4. Performance Testing**
+- Page loads in < 2 seconds
+- No layout shift
+- Smooth animations (60fps)
+
+**5. Error Scenarios**
+- Backend is offline
+- Network timeout
+- Invalid API response
+- Empty states (no sessions)
+
+---
+
+## 🚀 Deployment Plan
+
+### Deployment Strategy
+
+**Platform: Vercel (Recommended)**
+
+**Why Vercel:**
+- Made by Next.js team
+- Zero config deployment
+- Automatic HTTPS
+- Global CDN
+- Free tier
+- Environment variables
+- Preview deployments
+
+**Alternative: Netlify**
+- Similar features
+- Also free tier
+- Easy setup
+
+### Deployment Steps
+
+**1. Prepare for Deployment**
+- Test production build locally: `npm run build`
+- Verify no errors
+- Check environment variables
+
+**2. Connect to Vercel**
+- Create Vercel account
+- Connect GitHub repository
+- Auto-deploy on push to main
+
+**3. Configure Environment Variables**
+- Add NEXT_PUBLIC_API_URL in Vercel dashboard
+- Point to your deployed backend URL
+
+**4. Deploy**
+- Push to GitHub
+- Vercel auto-builds and deploys
+- Get live URL (yourapp.vercel.app)
+
+**5. Custom Domain (Optional)**
+- Buy domain (Namecheap, Google Domains)
+- Add to Vercel
+- Configure DNS
+
+**6. Post-Deployment**
+- Test live site
+- Check API connection
+- Monitor errors (Vercel Analytics)
+
+---
+
+## 📊 Development Timeline
+
+### Realistic Timeline
+
+**Total Time: 1-2 weeks (part-time)**
+
+**Week 1:**
+- Day 1: Setup (2 hours)
+- Day 2: Dark mode + Layout (2 hours)
+- Day 3: Research form + API (3 hours)
+- Day 4: Results display (2 hours)
+- Day 5: History page (3 hours)
+- Day 6: Polish + responsive (2 hours)
+- Day 7: Testing + fixes (2 hours)
+
+**Week 2:**
+- Day 8-9: Advanced features (optional)
+- Day 10-11: More polish
+- Day 12-13: Comprehensive testing
+- Day 14: Deploy + documentation
+
+---
+
+## ✅ Feature Checklist
+
+### Must-Have Features (MVP)
+- [ ] Home page with research form
+- [ ] Submit question to API
+- [ ] Display loading state
+- [ ] Show research results
+- [ ] Quality score badge
+- [ ] Iteration count badge
+- [ ] History page
+- [ ] List recent sessions
+- [ ] Dark/light mode toggle
+- [ ] Responsive design (mobile + desktop)
+- [ ] Error handling
+- [ ] Toast notifications
+
+### Nice-to-Have Features
+- [ ] Real-time progress updates (streaming)
+- [ ] Session detail page
+- [ ] Search/filter history
+- [ ] Export results (PDF/Markdown)
+- [ ] Copy answer to clipboard
+- [ ] Share session (link)
+- [ ] Keyboard shortcuts
+- [ ] Analytics (track usage)
+
+### Advanced Features (Future)
+- [ ] User authentication
+- [ ] Save favorite sessions
+- [ ] Compare sessions
+- [ ] Rate answers
+- [ ] Custom themes
+- [ ] Multi-language support
+
+---
+
+## 🎯 Success Criteria
+
+### Your frontend is ready when:
+
+**Functionality:**
+- ✅ Can submit research questions
+- ✅ Displays answers clearly
+- ✅ Shows history of past research
+- ✅ Works on mobile and desktop
+
+**Design:**
+- ✅ Looks professional
+- ✅ Dark/light mode works smoothly
+- ✅ Consistent styling
+- ✅ No UI bugs
+
+**Performance:**
+- ✅ Fast loading (< 3 seconds)
+- ✅ Smooth interactions
+- ✅ No lag or jank
+
+**Deployment:**
+- ✅ Live URL working
+- ✅ Connected to backend
+- ✅ No console errors
+
+---
+
+## 💡 Pro Tips
+
+**1. Start Simple**
+- Build MVP first
+- Add features later
+- Don't over-engineer
+
+**2. Use shadcn Examples**
+- Check shadcn/ui documentation
+- Copy component examples
+- Customize for your needs
+
+**3. Mobile First**
+- Design for mobile first
+- Then scale up for desktop
+- Test on real devices
+
+**4. Consistent Patterns**
+- Reuse same patterns
+- DRY (Don't Repeat Yourself)
+- Create helper functions
+
+**5. Git Commits**
+- Commit often
+- Descriptive messages
+- One feature per commit
+
+**6. Environment Variables**
+- Never hardcode API URLs
+- Use .env.local
+- Different URLs for dev/prod
+
+---
+
+## 📚 Resources
+
+**Documentation:**
+- Next.js: https://nextjs.org/docs
+- shadcn/ui: https://ui.shadcn.com
+- Tailwind CSS: https://tailwindcss.com
+- Axios: https://axios-http.com
+
+**Inspiration:**
+- Look at ChatGPT interface
+- Check Perplexity.ai
+- Study Claude.ai design
+
+**Tools:**
+- Figma (design mockups)
+- Chrome DevTools (debugging)
+- Lighthouse (performance)
+- WAVE (accessibility)
+
+---
+
+## 🎬 Next Steps
+
+**Right now:**
+1. Read this plan thoroughly
+2. Understand the architecture
+3. Set up your Next.js project
+4. Install shadcn/ui and dependencies
+
+**Then:**
+1. Start with layout + dark mode
+2. Build research form
+3. Connect to API
+4. Display results
+5. Add history page
+6. Polish and deploy
+
+---
+
+**Good luck building your frontend! Take it step-by-step, and you'll have an amazing interface in 1-2 weeks! 🚀**
+
+**Want me to help with specific implementation questions as you build? Just ask!**
