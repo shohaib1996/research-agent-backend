@@ -3,6 +3,9 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+from contextlib import asynccontextmanager
+import asyncio
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -18,10 +21,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
+KEEP_ALIVE_INTERVAL = int(os.getenv("KEEP_ALIVE_INTERVAL", "600"))  # 10 minutes
+
+
+async def keep_alive():
+    """Ping self every 10 minutes to prevent Render free-tier spin-down."""
+    if not RENDER_EXTERNAL_URL:
+        logger.info("RENDER_EXTERNAL_URL not set, keep-alive disabled")
+        return
+    logger.info(f"Keep-alive started, pinging {RENDER_EXTERNAL_URL} every {KEEP_ALIVE_INTERVAL}s")
+    async with httpx.AsyncClient() as client:
+        while True:
+            await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+            try:
+                response = await client.get(f"{RENDER_EXTERNAL_URL}/")
+                logger.info(f"Keep-alive ping: {response.status_code}")
+            except Exception as e:
+                logger.warning(f"Keep-alive ping failed: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(keep_alive())
+    yield
+    task.cancel()
+
+
 app = FastAPI(
     title="Agentic Research Assistant",
     description="Multi-agent AI research with persistence",
     version="0.6.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware
